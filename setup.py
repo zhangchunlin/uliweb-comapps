@@ -22,7 +22,7 @@ def desc():
     info = read('README.md', __doc__)
     return info + '\n\n' + read('doc/CHANGELOG.md')
 
-file_text = read(fpath('uliweb-comapps/__init__.py'))
+file_text = read(fpath('uliweb_comapps/__init__.py'))
 
 
 def grep(attrname):
