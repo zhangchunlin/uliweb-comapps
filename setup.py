@@ -3,6 +3,7 @@ __doc__ = """uliweb-comapps"""
 
 import re
 import os
+import sys
 
 from setuptools import setup
 
@@ -30,6 +31,11 @@ def grep(attrname):
     strval, = re.findall(pattern, file_text)
     return strval
 
+if sys.version_info[0] == 2:
+    uliweb_mname = "uliweb"
+else:
+    uliweb_mname = "uliweb3"
+
 setup(
     name='uliweb-comapps',
     version=grep('__version__'),
@@ -44,7 +50,7 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'uliweb',
+        uliweb_mname,
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
