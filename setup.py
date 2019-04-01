@@ -5,7 +5,7 @@ import re
 import os
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 def fpath(name):
     return os.path.join(os.path.dirname(__file__), name)
@@ -45,7 +45,7 @@ setup(
     author_email=grep('__email__'),
     description='uliweb-comapps',
     long_description=desc(),
-    packages = ['uliweb_comapps'],
+    packages = find_packages(),
     include_package_data=True,
     zip_safe=False,
     platforms='any',
