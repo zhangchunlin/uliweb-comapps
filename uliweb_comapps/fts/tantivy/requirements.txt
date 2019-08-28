@@ -1,0 +1,2 @@
+setuptools-rust
+-e git+https://github.com/tantivy-search/tantivy-py#egg=tantivy
