@@ -1,0 +1,325 @@
+{{extend 'rbac_admin_layout.html'}}
+
+{{block title}}Roles admin{{end title}}
+
+{{block content_header_title}}<h1>Role</h1>{{end content_header_title}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_viewedit.html"}}
+<div id="app" class='box'>
+<div class="box-body">
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Role")}}</h1>
+        <apijson-viewedit model_name="role" request_tag="{{=request_tag}}" :id="id_" :config="tconfig"></apijson-viewedit>
+    </i-col>
+</row>
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Users list")}}</h1>
+        <i-form @submit.native.prevent :label-width="80">
+            <form-item label="Users">
+                <i-select v-model="users" :label="init_user_labels" multiple remote :remote-method="remote_options_user" filterable :loading="loading_user">
+                    <i-option v-for="(option, index) in options_user" :value="option.value" :key="index">{option.label}</i-option>
+                </i-select>
+            </form-item>
+            <form-item label="Action">
+                <i-button type="info" icon="ios-download" size="large" @click="save_users" :disabled="!changed_users">Save</i-button>
+            </form-item>
+        </i-form>
+    </i-col>
+    <i-col span="2">&nbsp</i-col>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Groups list")}}</h1>
+        <i-form @submit.native.prevent :label-width="80">
+            <form-item label="Groups">
+                <i-select v-model="groups" :label="init_group_labels" multiple remote :remote-method="remote_options_group" filterable :loading="loading_group">
+                    <i-option v-for="(option, index) in options_group" :value="option.value" :key="index">{option.label}</i-option>
+                </i-select>
+            </form-item>
+            <form-item label="Action">
+                <i-button type="info" icon="ios-download" size="large" @click="save_groups" :disabled="!changed_groups">Save</i-button>
+            </form-item>
+        </i-form>
+    </i-col>
+</row>
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Permission list")}}</h1>
+        <i-form @submit.native.prevent :label-width="80">
+            <form-item label="Permissions">
+                <i-select v-model="permissions" :label="init_permission_labels" multiple remote :remote-method="remote_options_permission" filterable :loading="loading_permission">
+                    <i-option v-for="(option, index) in options_permission" :value="option.value" :key="index">{option.label}</i-option>
+                </i-select>
+            </form-item>
+            <form-item label="Action">
+                <i-button type="info" icon="ios-download" size="large" @click="save_permissions" :disabled="!changed_permissions">Save</i-button>
+            </form-item>
+        </i-form>
+
+    </i-col>
+</row>
+</div>
+</div>
+
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:function(){
+        return {
+            tconfig:{{=tconfig_json}},
+            id_:{{=id_}},
+            users: {{=init_users}},
+            init_user_labels:{{<<init_user_labels}},
+            loading_user: false,
+            changed_users: false,
+            options_user: [],
+
+            groups: {{=init_groups}},
+            init_group_labels:{{<<init_group_labels}},
+            loading_group: false,
+            changed_groups: false,
+            options_group: [],
+
+            permissions: {{=init_permissions}},
+            init_permission_labels:{{<<init_permission_labels}},
+            loading_permission: false,
+            changed_permissions: false,
+            options_permission: []
+        }
+    },
+    methods:{
+        remote_options_user: function(query){
+            if (query=="") {
+                this.options_user = []
+                this.loading_user = false
+                return
+            }
+            var params = {
+                "[]":{
+                    "@count": 10,
+                    "user":{
+                        "@order":"username+",
+                        "@role":"ADMIN",
+                        "@expr":["username$","|","nickname$"],
+                        "username$":"%"+query+"%",
+                        "nickname$":"%"+query+"%"
+                    }
+                },
+                "total@":"/[]/total"
+            }
+            this.loading_user = true
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code!=200) {
+                        thisp.$Notice.error({
+                            title: 'error when filtering users',
+                            desc: data.msg
+                        })
+                        return
+                    }
+                    var l = data["[]"]
+                    var options = []
+                    for (var i in l) {
+                        d = l[i]
+                        options.push({value:d.user.id,label:d.user.username+" ("+d.user.nickname+")"})
+                    }
+                    thisp.options_user = options
+                    thisp.loading_user = false
+                }
+            })
+        },
+        save_users: function(){
+            var params = {
+                "role":this.id_,
+                "users":this.users
+            }
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_comapps.auth.rbac_admin.views.RoleView.api_update_users')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.success) {
+                        thisp.$Notice.success({
+                            title: 'success to update role',
+                            desc: data.msg
+                        })
+                        thisp.changed_users = false
+                    }
+                    else {
+                        thisp.$Notice.error({
+                            title: 'fail to update role',
+                            desc: data.msg
+                        })
+                    }
+                }
+            })
+        },
+        remote_options_group: function(query){
+            if (query=="") {
+                this.options_group = []
+                this.loading_group = false
+                return
+            }
+            var params = {
+                "[]":{
+                    "@count": 10,
+                    "usergroup":{
+                        "@order":"name+",
+                        "@role":"ADMIN",
+                        "name$":"%"+query+"%",
+                    }
+                },
+                "total@":"/[]/total"
+            }
+            this.loading_group = true
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code!=200) {
+                        thisp.$Notice.error({
+                            title: 'error when filtering groups',
+                            desc: data.msg
+                        })
+                        return
+                    }
+                    var l = data["[]"]
+                    var options = []
+                    for (var i in l) {
+                        d = l[i]
+                        options.push({value:d.usergroup.id,label:d.usergroup.name})
+                    }
+                    thisp.options_group = options
+                    thisp.loading_group = false
+                }
+            })
+        },
+        save_groups: function(){
+            var params = {
+                "role":this.id_,
+                "groups":this.groups
+            }
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_comapps.auth.rbac_admin.views.RoleView.api_update_groups')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.success) {
+                        thisp.$Notice.success({
+                            title: 'success to update role',
+                            desc: data.msg
+                        })
+                        thisp.changed_groups = false
+                    }
+                    else {
+                        thisp.$Notice.error({
+                            title: 'fail to update role',
+                            desc: data.msg
+                        })
+                    }
+                }
+            })
+        },
+        remote_options_permission: function(query){
+            if (query=="") {
+                this.options_permission = []
+                this.loading_permission = false
+                return
+            }
+            var params = {
+                "[]":{
+                    "@count": 10,
+                    "permission":{
+                        "@order":"name+",
+                        "@role":"ADMIN",
+                        "name$":"%"+query+"%",
+                    }
+                },
+                "total@":"/[]/total"
+            }
+            this.loading_permission = true
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code!=200) {
+                        thisp.$Notice.error({
+                            title: 'error when filtering permissions',
+                            desc: data.msg
+                        })
+                        return
+                    }
+                    var l = data["[]"]
+                    var options = []
+                    for (var i in l) {
+                        d = l[i]
+                        options.push({value:d.permission.id,label:d.permission.name})
+                    }
+                    thisp.options_permission = options
+                    thisp.loading_permission = false
+                }
+            })
+        },
+        save_permissions: function(){
+            var params = {
+                "role":this.id_,
+                "permissions":this.permissions
+            }
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_comapps.auth.rbac_admin.views.RoleView.api_update_permissions')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.success) {
+                        thisp.$Notice.success({
+                            title: 'success to update role',
+                            desc: data.msg
+                        })
+                        thisp.changed_permissions = false
+                    }
+                    else {
+                        thisp.$Notice.error({
+                            title: 'fail to update role',
+                            desc: data.msg
+                        })
+                    }
+                }
+            })
+        }
+    },
+    watch: {
+        users: function(n,o){
+            this.changed_users = true
+        },
+        groups: function(n,o){
+            this.changed_groups = true
+        },
+        permissions: function(n,o){
+            this.changed_permissions = true
+        }
+    }
+})
+</script>
+
+{{end}}

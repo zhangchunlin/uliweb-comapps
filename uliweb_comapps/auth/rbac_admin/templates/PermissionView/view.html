@@ -1,0 +1,138 @@
+{{extend 'rbac_admin_layout.html'}}
+
+{{block title}}Permissions admin{{end title}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_active='SIDEMENU',"user_admin/permissions"}}
+{{end sidemenu_config}}
+
+{{block content_header_title}}<h1>Permission</h1>{{end content_header_title}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_viewedit.html"}}
+<div id="app" class='box'>
+<div class="box-body">
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Permission")}}</h1>
+        <apijson-viewedit model_name="permission" request_tag="{{=request_tag}}" :id="id_" :config="tconfig"></apijson-viewedit>
+    </i-col>
+</row>
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("Role list")}}</h1>
+        <i-form @submit.native.prevent :label-width="80">
+            <form-item label="Roles">
+                <i-select v-model="roles" :label="init_role_labels" multiple remote :remote-method="remote_options_role" filterable :loading="loading_role">
+                    <i-option v-for="(option, index) in options_role" :value="option.value" :key="index">{option.label}</i-option>
+                </i-select>
+            </form-item>
+            <form-item label="Action">
+                <i-button type="info" icon="ios-download" size="large" @click="save_roles" :disabled="!changed_roles">Save</i-button>
+            </form-item>
+        </i-form>
+    </i-col>
+</row>
+</div>
+</div>
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:function(){
+        return {
+            tconfig:{{=tconfig_json}},
+            id_:{{=id_}},
+
+            roles: {{=init_roles}},
+            init_role_labels:{{<<init_role_labels}},
+            loading_role: false,
+            changed_roles: false,
+            options_role: []
+        }
+    },
+    methods:{
+        remote_options_role: function(query){
+            if (query=="") {
+                this.options_role = []
+                this.loading_role = false
+                return
+            }
+            var params = {
+                "[]":{
+                    "@count": 10,
+                    "role":{
+                        "@order":"name+",
+                        "@role":"ADMIN",
+                        "name$":"%"+query+"%",
+                    }
+                },
+                "total@":"/[]/total"
+            }
+            this.loading_role = true
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_apijson.apijson.views.ApiJson.get')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.code!=200) {
+                        thisp.$Notice.error({
+                            title: 'error when filtering roles',
+                            desc: data.msg
+                        })
+                        return
+                    }
+                    var l = data["[]"]
+                    var options = []
+                    for (var i in l) {
+                        d = l[i]
+                        options.push({value:d.id,label:d.name})
+                    }
+                    thisp.options_role = options
+                    thisp.loading_role = false
+                }
+            })
+        },
+        save_roles: function(){
+            var params = {
+                "permission":this.id_,
+                "roles":this.roles
+            }
+            var thisp = this
+            $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_comapps.auth.rbac_admin.views.PermissionView.api_update_roles')}}",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (data) {
+                    if (data.success) {
+                        thisp.$Notice.success({
+                            title: 'success to update role',
+                            desc: data.msg
+                        })
+                        thisp.changed_roles = false
+                    }
+                    else {
+                        thisp.$Notice.error({
+                            title: 'fail to update role',
+                            desc: data.msg
+                        })
+                    }
+                }
+            })
+        }
+    },
+    watch: {
+        roles: function(n,o){
+            this.changed_roles = true
+        }
+    }
+})
+
+</script>
+
+{{end}}

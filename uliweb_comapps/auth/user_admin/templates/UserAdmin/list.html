@@ -1,0 +1,94 @@
+{{extend 'user_admin_layout.html'}}
+
+{{block title}}Users admin{{end title}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_active='SIDEMENU',"user_admin/users"}}
+{{end sidemenu_config}}
+
+{{block content_tool}}
+{{end}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_table.html"}}
+
+<div id="app" class='box'>
+<div class="box-body">
+    <row>
+        <i-col span="6">
+            <i-form :label-width="120">
+                <form-item label="Include deleted">
+                    <checkbox v-model="include_deleted"></checkbox>
+                </form-item>
+            </i-form>
+        </i-col>
+    </row>
+
+    <apijson-table model_name="user" :config="tconfig" :hook_init="hook_init" :hook_ajax_params="hook_ajax_params" :custom_tcolumns_render_generator="custom_tcolumns_render_generator" ref="table"></apijson-table>
+</div>
+</div>
+<script>
+
+var tconfig = {{=tconfig_json}}
+tconfig.delete_set_deleted = true
+tconfig.deleted_field_name = "deleted"
+
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:function(){
+        return {
+            tconfig: tconfig,
+            include_deleted: false,
+            custom_tcolumns_render_generator: {
+                "id": function(key) {
+                    var render_func = function(h,params){
+                        var row_id = params.row.id
+                        return h('a',{
+                                attrs:{
+                                    href:'{{=url_for("uliweb_comapps.auth.user_admin.views.UserAdmin.view")}}'+'?id='+row_id
+                                }
+                            },
+                            row_id
+                        )
+                    }
+                    return render_func
+                },
+                "username": function(key) {
+                    var render_func = function(h,params){
+                        return h('a',{
+                                attrs:{
+                                    href:'{{=url_for("uliweb_comapps.auth.user_admin.views.UserAdmin.view")}}'+'?id='+params.row.id
+                                }
+                            },
+                            params.row.username
+                        )
+                    }
+                    return render_func
+                }
+            }
+        }
+    },
+    methods:{
+        hook_init: function(thisp) {
+            thisp.$Notice.config({top: 100,duration: 8});
+        },
+        hook_ajax_params: function(method,action,params) {
+            if (method=="apijson_get") {
+                if (!this.include_deleted) {
+                    params["[]"].user.deleted = false
+                }
+            }
+            return params
+        }
+    },
+    watch: {
+        include_deleted: function(n,o) {
+            vm.$refs.table.update_list()
+        }
+    }
+})
+</script>
+{{end}}

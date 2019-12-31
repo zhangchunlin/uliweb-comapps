@@ -1,0 +1,70 @@
+{{extend 'user_admin_layout.html'}}
+
+{{block title}}User information{{end title}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_active='SIDEMENU',"user/information"}}
+{{end sidemenu_config}}
+
+{{block content_header_title}}<h1>User</h1>{{end content_header_title}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_viewedit.html"}}
+<div id="app" class='box'>
+<div class="box-body">
+<row>
+    <i-col span="2">
+        {{if can_modify:}}
+        <a href="{{=url_for('uliweb_comapps.auth.user_admin.views.UserView.edit_image')}}" title="{{=_('Click to change portrait')}}"><img src="{{=image_url}}" class="portrait"/></a>
+        {{else:}}
+        <img src="{{=image_url}}" class="portrait"/>
+        {{pass}}
+    </i-col>
+</row>
+<row>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("User information")}}</h1>
+        <apijson-viewedit model_name="user" request_tag="{{=request_tag}}" :id="uid" :config="tconfig"></apijson-viewedit>
+    </i-col>
+{{if usergroups:}}
+    <i-col span="2">&nbsp</i-col>
+    <i-col span="10">
+        <h1 class="page-header">{{=_("User groups")}}</h1>
+        <table class="table">
+            <thead><tr><th>Group name</th></tr></thead>
+            {{for usergroup in usergroups:}}
+                <tr><td>{{=usergroup.name}}</td></tr>
+            {{pass}}
+        </table>
+    </i-col>
+{{pass #usergroups}}
+
+</row>
+</div>
+</div>
+
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:function(){
+        return {
+            tconfig:{{=tconfig_json}},
+            uid:{{=uid}}
+        }
+    },
+    methods:{}
+})
+</script>
+
+{{end content_main}}
+
+{{block custom_viewedit_componet}}
+<i-select v-if="item.component=='timezone'" filterable v-model="item.value" :disabled="{{='false' if can_modify else 'true'}}">
+    {{for i in functions.get_timezone_options():}}
+    <i-option value="{{=i.get('value')}}" label="{{=i.get('label')}}"></i-option>
+    {{pass}}
+</i-select>
+{{end custom_viewedit_componet}}

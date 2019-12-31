@@ -1,0 +1,60 @@
+{{extend "rbac_admin_layout.html"}}
+
+{{block title}}Permissions admin{{end title}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_active='SIDEMENU',"user_admin/permissions"}}
+{{end sidemenu_config}}
+
+{{block content_header_title}}<h1>Permissions</h1>{{end content_header_title}}
+
+{{block content_main}}
+{{use "ui.vue"}}
+{{use "ui.iview"}}
+{{include "vue/inc_apijson_table.html"}}
+
+<div id="app" class='box'>
+<div class="box-body">
+    <apijson-table model_name="permission" :config="tconfig" :custom_tcolumns_render_generator="custom_tcolumns_render_generator" ref="table"></apijson-table>
+</div>
+</div>
+<script>
+var vm = new Vue({
+    el: '#app',
+    delimiters: ['{', '}'],
+    data:function(){
+        return {
+            tconfig: {{=tconfig_json}},
+            custom_tcolumns_render_generator: {
+                "id": function(key) {
+                    var render_func = function(h,params){
+                        var row_id = params.row.id
+                        return h('a',{
+                                attrs:{
+                                    href:'{{=url_for("uliweb_comapps.auth.rbac_admin.views.PermissionView.view")}}'+'?id='+row_id
+                                }
+                            },
+                            row_id
+                        )
+                    }
+                    return render_func
+                },
+                "name_link": function(key){
+                    var render_func = function(h,params){
+                        var row_id = params.row.id
+                        return h('a',{
+                                attrs:{
+                                    href:'{{=url_for("uliweb_comapps.auth.rbac_admin.views.PermissionView.view")}}'+'?id='+row_id
+                                }
+                            },
+                            params.row.name
+                        )
+                    }
+                    return render_func
+                }
+            }
+        }
+    }
+})
+</script>
+{{end}}
