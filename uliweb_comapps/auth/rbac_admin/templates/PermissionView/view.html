@@ -71,6 +71,9 @@ var vm = new Vue({
                 },
                 "total@":"/[]/total"
             }
+            //workaround for https://github.com/iview/iview/issues/5885
+            if (typeof(query)=="object") {params["[]"]["role"] = {"id{}": query,"@role":"ADMIN",} }
+
             this.loading_role = true
             var thisp = this
             $.ajax({
@@ -90,7 +93,7 @@ var vm = new Vue({
                     var options = []
                     for (var i in l) {
                         d = l[i]
-                        options.push({value:d.id,label:d.name})
+                        options.push({value:d.role.id,label:d.role.name})
                     }
                     thisp.options_role = options
                     thisp.loading_role = false
@@ -125,6 +128,12 @@ var vm = new Vue({
                 }
             })
         }
+    },
+    mounted: function() {
+        this.$nextTick(function () {
+            //workaround for https://github.com/iview/iview/issues/5885
+            vm.remote_options_role(vm.roles)
+        })
     },
     watch: {
         roles: function(n,o){

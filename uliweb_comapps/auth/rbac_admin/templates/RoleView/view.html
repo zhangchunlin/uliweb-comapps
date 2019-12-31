@@ -111,6 +111,9 @@ var vm = new Vue({
                 },
                 "total@":"/[]/total"
             }
+            //workaround for https://github.com/iview/iview/issues/5885
+            if (typeof(query)=="object") {params["[]"]["user"] = {"id{}": query,"@role":"ADMIN",} }
+
             this.loading_user = true
             var thisp = this
             $.ajax({
@@ -182,6 +185,9 @@ var vm = new Vue({
                 },
                 "total@":"/[]/total"
             }
+            //workaround for https://github.com/iview/iview/issues/5885
+            if (typeof(query)=="object") {params["[]"]["usergroup"] = {"id{}": query,"@role":"ADMIN",} }
+
             this.loading_group = true
             var thisp = this
             $.ajax({
@@ -307,6 +313,13 @@ var vm = new Vue({
                 }
             })
         }
+    },
+    mounted: function() {
+        this.$nextTick(function () {
+            //workaround for https://github.com/iview/iview/issues/5885
+            vm.remote_options_user(vm.users)
+            vm.remote_options_group(vm.groups)
+        })
     },
     watch: {
         users: function(n,o){
