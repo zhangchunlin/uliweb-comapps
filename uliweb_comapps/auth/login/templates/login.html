@@ -1,10 +1,14 @@
 {{extend "adminlte/layout1.html"}}
 
+{{block title}}User login{{end}}
+
 {{block body_class}}skin-blue-light login-page{{end}}
 
 {{block pagecss}}
-{{link "login/login.css"}}
+{{link url_for_static("login/login.css")}}
 {{end}}
+
+{{block topbar}}{{end}}
 
 {{block content}}
 
