@@ -63,7 +63,6 @@ class UserView(object):
         tconfig = functions.get_apijson_table(role,"userself")
         tconfig["editable"] = can_modify
 
-        response.template = "UserAdmin/view.html"
         return {
             "request_tag":"userself",
             "can_modify":can_modify,

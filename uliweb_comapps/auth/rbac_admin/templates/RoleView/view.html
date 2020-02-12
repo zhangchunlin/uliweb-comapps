@@ -1,24 +1,17 @@
-{{extend 'rbac_admin_layout.html'}}
+{{extend 'RoleView/list.html'}}
 
-{{block title}}Roles admin{{end title}}
-
-{{block content_header_title}}<h1>Role</h1>{{end content_header_title}}
-
-{{block content_main}}
-{{use "ui.vue"}}
-{{use "ui.iview"}}
+{{block content}}
 {{include "vue/inc_apijson_viewedit.html"}}
-<div id="app" class='box'>
-<div class="box-body">
+<card>
 <row>
     <i-col span="10">
-        <h1 class="page-header">{{=_("Role")}}</h1>
+        <h3 class="page-header">{{=_("Role")}}</h1>
         <apijson-viewedit model_name="role" request_tag="{{=request_tag}}" :id="id_" :config="tconfig"></apijson-viewedit>
     </i-col>
 </row>
 <row>
     <i-col span="10">
-        <h1 class="page-header">{{=_("Users list")}}</h1>
+        <h3 class="page-header">{{=_("Users list")}}</h1>
         <i-form @submit.native.prevent :label-width="80">
             <form-item label="Users">
                 <i-select v-model="users" :label="init_user_labels" multiple remote :remote-method="remote_options_user" filterable :loading="loading_user">
@@ -32,7 +25,7 @@
     </i-col>
     <i-col span="2">&nbsp</i-col>
     <i-col span="10">
-        <h1 class="page-header">{{=_("Groups list")}}</h1>
+        <h3 class="page-header">{{=_("Groups list")}}</h1>
         <i-form @submit.native.prevent :label-width="80">
             <form-item label="Groups">
                 <i-select v-model="groups" :label="init_group_labels" multiple remote :remote-method="remote_options_group" filterable :loading="loading_group">
@@ -47,7 +40,7 @@
 </row>
 <row>
     <i-col span="10">
-        <h1 class="page-header">{{=_("Permission list")}}</h1>
+        <h3 class="page-header">{{=_("Permission list")}}</h1>
         <i-form @submit.native.prevent :label-width="80">
             <form-item label="Permissions">
                 <i-select v-model="permissions" :label="init_permission_labels" multiple remote :remote-method="remote_options_permission" filterable :loading="loading_permission">
@@ -61,12 +54,13 @@
 
     </i-col>
 </row>
-</div>
-</div>
+</card>
+{{end content}}
 
+{{block mainapp_vue}}
 <script>
 var vm = new Vue({
-    el: '#app',
+    el: '#mainapp',
     delimiters: ['{', '}'],
     data:function(){
         return {
@@ -335,4 +329,4 @@ var vm = new Vue({
 })
 </script>
 
-{{end}}
+{{end mainapp_vue}}

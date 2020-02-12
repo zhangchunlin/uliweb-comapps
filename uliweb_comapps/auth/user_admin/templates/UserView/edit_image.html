@@ -1,18 +1,15 @@
 {{extend 'user_admin_layout.html'}}
 
 {{block sidemenu_config}}
-{{sidemenu_name,sidemenu_active='SIDEMENU',"user/information"}}
+{{sidemenu_name,sidemenu_open,sidemenu_active='SIDEMENU',"['user']","information"}}
 {{end sidemenu_config}}
 
-
-{{block content_header_title}}<h1>Portrait</h1>{{end content_header_title}}
-
-{{block content_main}}
-{{use "ui.jquery", ui=True}}
+{{block content}}
+{{use "ui.jqueryui"}}
 {{use "ui.jqutils"}}
 {{use "ui.jcrop"}}
-<div class='box'>
-<div class="box-body">
+<card>
+<h3 class="page-header">Portrait</h3>
 <h1 class="page-header">{{=_("Portrait crop")}}</h1>
 {{if image_url:}}
 <table border="0" cellpadding="20" cellspacing="0">
@@ -101,6 +98,5 @@ function showPreview(c)
     <input id="field_image" name="image" type="file">
     <input type="submit" value="{{=_('Upload')}}">
 </form>
-</div>
-</div>
-{{end}}
+</card>
+{{end contain}}
