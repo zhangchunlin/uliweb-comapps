@@ -1,68 +1,120 @@
-{{extend "adminlte/layout1.html"}}
+{{extend "iview/layout/full.html"}}
 
 {{block title}}User login{{end}}
 
 {{block body_class}}skin-blue-light login-page{{end}}
 
 {{block pagecss}}
-{{link url_for_static("login/login.css")}}
+<style>
+  #maincontent {
+    min-height: calc(100vh);
+  }
+</style>
 {{end}}
 
-{{block topbar}}{{end}}
+{{block container}}
+{{block flash}}
+{{include "iview/layout/inc/flash.html"}}
+{{end flash}}
 
-{{block content}}
-
-<div class="login-box">
-  <div class="login-box-body">
-    <div class="login-logo">
-      <a href="{{<< settings.LAYOUT.logo_url}}">{{<< settings.LAYOUT.logo_lg}}</a>
-    </div>
-    <form action="{{=url_for('uliweb_comapps.auth.login.views.login')}}" method="post" id="login-form">
-      <input type="hidden" name="next" value="{{=next}}"></input>
-      <div class="form-group has-feedback">
-        <input id="field_username" name="username" class="form-control" required placeholder="{{=_('username')}}">
-        <span class="glyphicon glyphicon-user form-control-feedback"></span>
-      </div>
-      <div class="form-group has-feedback">
-        <input type="password" class="form-control" name="password" required placeholder="{{=_('password')}}">
-        <span class="glyphicon glyphicon-lock form-control-feedback"></span>
-      </div>
-      <div class="row">
-        <div class="col-xs-6">
-          <div class="checkbox">
-            <label>
-              <input id="field_rememberme" name="rememberme" type="checkbox">
-              {{=_('Remember Me')}}
-            </label>
+<div id="mainapp" style="padding: 0px;" v-cloak>
+  <div>
+    <layout>
+      {{block content_wrapper}}
+      <layout id="maincontent">
+        {{block content}}
+        <i-col span="8" offset="8">
+          <div style="margin:20px" class="ivu-card-body">
+            <Card style="min-width: 170px; margin-top: 100px;">
+              <div style="text-align:center; margin-bottom: 8px;">
+                <h1>{{= settings.LAYOUT.logo_lg}}</h1>
+              </div>
+              <i-form label-position="center" ref="login_form" :model="login_form" :rules="rules">
+                <form-item prop="username">
+                  <i-input type="text" v-model="login_form.username" placeholder="Username">
+                    <icon type="ios-person-outline" slot="prepend"></icon>
+                  </i-input>
+                </form-item>
+                <form-item prop="password" ref="lpass">
+                  <i-input type="password" v-model="login_form.password" @keyup.enter.native="login"
+                    placeholder="Password">
+                    <icon type="ios-lock-outline" slot="prepend"></icon>
+                  </i-input>
+                </form-item>
+                <form-item>
+                  <i-switch v-model="login_form.rememberme" style="margin-right: 5px;">
+                    <span slot="open">On</span>
+                    <span slot="close">Off</span>
+                  </i-switch>
+                  Remember Me
+                </form-item>
+                <form-item>
+                  <i-button type="success" icon="md-log-in" @click="login" :loading="loading_form" long>Login
+                  </i-button>
+                </form-item>
+              </i-form>
+            </Card>
           </div>
-        </div>
-        <div class="col-xs-6">
-          {{if settings.LOGIN.register:}}
-            <a href="{{=url_for('uliweb_comapps.auth.login.views.register')}}" class="btn btn-link">{{=_('Register New User')}}</a>
-          {{pass}}
-        </div>
-      </div>
-      <div class="row">
-        <!-- /.col -->
-        <div class="col-xs-12">
-          <button type="submit" class="btn btn-primary btn-block btn-flat">{{=_('Sign In')}}</button>
-        </div>
-      </div>
-    </form>
-
+        </i-col>
+        {{end content}}
+      </layout>
+      {{end content_wrapper}}
+    </layout>
   </div>
-  <!-- /.login-box-body -->
 </div>
-
+{{block mainjs}}{{end mainjs}}
+{{block mainapp_vue}}
 <script>
-  $(function(){
-    validate_submit('#login-form');
-    $('#login-form').on('success.form', function(e){
-      console.log('here');
-    });
-  });
+  var vueObj = new Vue({
+    el: '#mainapp',
+    data: {
+      login_form: {
+        username: "",
+        password: "",
+        rememberme: false
+      },
+      loading_form: false,
+      rules: {
+        username: [
+          { required: true, message: "Username cannot be empty", trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: "Password cannot be empty", trigger: 'blur' }
+        ]
+      },
+    },
+    methods: {
+      login: function () {
+        var thisp = this
+        this.$refs["login_form"].validate(
+          function (valid) {
+            if (valid) {
+              thisp.loading_form = true
+              $.ajax({
+                type: "POST",
+                url: "{{=url_for('uliweb_comapps.auth.login.views.api_login')}}",
+                data: {
+                  username: thisp.login_form.username,
+                  password: thisp.login_form.password,
+                  rememberme: thisp.login_form.rememberme
+                },
+                dataType: "json",
+                success: function (data) {
+                  if(!data.success){
+                    setTimeout(function(){ vueObj.$refs.lpass.error = data.msg }, 0)
+                    thisp.loading_form = false
+                  }else{
+                    thisp.$Message.success(data.msg)
+                    window.location.href = "{{=functions.get_request_next()}}" + window.location.hash
+                  }
+                }
+              })
+            }
+          }
+        )
+      },
+    }
+  })
 </script>
-{{end}}
-
-{{block header_custom_menu}}
-{{end}}
+{{end mainapp_vue}}
+{{end container}}

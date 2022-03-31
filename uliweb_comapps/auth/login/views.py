@@ -12,19 +12,26 @@ def add_prefix(url):
     return settings.DOMAINS.static.get('url_prefix', '') + url or '/'
 
 
+def get_request_next():
+    from uliweb import request
+    next = request.values.get('next')
+    if not next:
+        next = request.referrer
+    if not next:
+        next = add_prefix('/')
+    return next
+
+
 def login():
     from uliweb.contrib.auth import login
 
     form = functions.get_form('auth.LoginForm')()
-
     if request.user:
         next = request.values.get('next')
         if next:
             return redirect(next)
 
-    next = request.values.get('next')
-    if not next:
-        next = add_prefix('/')
+    next = functions.get_request_next()
     if request.method == 'GET':
         form.next.data = next
         return {'next': next}
@@ -39,12 +46,34 @@ def login():
                 return redirect(next)
             else:
                 form.errors.update(d)
-        if request.is_xhr:
+        #request.is_xhr is deprecated in new werkezeug
+        #https://stackoverflow.com/questions/60131900/weird-is-xhr-error-when-deploying-flask-app-to-heroku
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return json({'success': False, '_': 'Login Failed', 'errors': form.errors})
         else:
             msg = form.errors.get('_', '') or _('Login failed!')
             return {'form': form, 'msg': str(msg)}
 
+@expose("/api_login")
+def api_login():
+    from uliweb.contrib.auth import login
+
+    if request.user:
+        return json({"success": True, "msg": "Login success."})
+    username = request.POST.get("username", "")
+    password = request.POST.get("password", "")
+    rememberme = request.POST.get("rememberme", "") == "true"
+
+    if not username or not password:
+        return json({"success": False, "msg": "Empty username or password."})
+
+    f, d = functions.authenticate(username=username, password=password)
+    if f:
+        request.session.remember = rememberme
+        login(username)
+        return json({"success": True, "msg": "Login success."})
+    else:
+        return json({"success": False, "msg": "User does not exist or password is not correct!"})
 
 def register():
     from uliweb import settings
