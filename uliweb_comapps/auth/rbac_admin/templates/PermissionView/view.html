@@ -1,12 +1,15 @@
 {{extend 'PermissionView/list.html'}}
 
-{{block content}}
+{{block other_inc}}
 {{include "vue/inc_apijson_viewedit.html"}}
+{{end other_inc}}
+
+{{block content}}
 <card>
 <row>
     <i-col span="10">
         <h3 class="page-header">{{=_("Permission")}}</h1>
-        <apijson-viewedit model_name="permission" request_tag="{{=request_tag}}" :id="id_" :config="tconfig"></apijson-viewedit>
+        <apijson-viewedit :table="table" :id="id_"></apijson-viewedit>
     </i-col>
 </row>
 <row>
@@ -34,7 +37,7 @@ var vm = new Vue({
     delimiters: ['{', '}'],
     data:function(){
         return {
-            tconfig:{{=tconfig_json}},
+            table:{{=table_json}},
             id_:{{=id_}},
 
             roles: {{=init_roles}},
@@ -56,14 +59,17 @@ var vm = new Vue({
                     "@count": 10,
                     "role":{
                         "@order":"name+",
-                        "@role":"ADMIN",
+                        "@role":this.table.role,
                         "name$":"%"+query+"%",
                     }
                 },
                 "total@":"/[]/total"
             }
             //workaround for https://github.com/iview/iview/issues/5885
-            if (typeof(query)=="object") {params["[]"]["role"] = {"id{}": query,"@role":"ADMIN",} }
+            if (typeof(query)=="object") {
+                params["[]"]["role"] = {"id{}": query,"@role":this.table.role,}
+                params["[]"]["@count"] = Object.keys(query).length
+            }
 
             this.loading_role = true
             var thisp = this

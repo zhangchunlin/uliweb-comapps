@@ -2,8 +2,11 @@
 
 {{block title}}User information{{end title}}
 
-{{block content}}
+{{block other_inc}}
 {{include "vue/inc_apijson_viewedit.html"}}
+{{end other_inc}}
+
+{{block content}}
 <card>
 <h3 class="page-header">User</h3>
 <row>
@@ -18,7 +21,7 @@
 <row>
     <i-col span="10">
         <h4 class="page-header">{{=_("User information")}}</h4>
-        <apijson-viewedit model_name="user" request_tag="{{=request_tag}}" :id="uid" :config="tconfig"></apijson-viewedit>
+        <apijson-viewedit :table="table" :id="uid"></apijson-viewedit>
     </i-col>
 {{if usergroups:}}
     <i-col span="2">&nbsp</i-col>
@@ -44,7 +47,7 @@ var vm = new Vue({
     delimiters: ['{', '}'],
     data:function(){
         return {
-            tconfig:{{=tconfig_json}},
+            table:{{=table_json}},
             uid:{{=uid}}
         }
     },
@@ -53,10 +56,10 @@ var vm = new Vue({
 </script>
 {{end mainapp_vue}}
 
-{{block custom_viewedit_componet}}
+{{block custom_viewedit_component}}
 <i-select v-if="item.component=='timezone'" filterable v-model="item.value" :disabled="{{='false' if can_modify else 'true'}}">
     {{for i in functions.get_timezone_options():}}
     <i-option value="{{=i.get('value')}}" label="{{=i.get('label')}}"></i-option>
     {{pass}}
 </i-select>
-{{end custom_viewedit_componet}}
+{{end custom_viewedit_component}}

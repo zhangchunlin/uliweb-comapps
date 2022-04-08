@@ -14,19 +14,19 @@ class RoleView(object):
     @expose('')
     def list(self):
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"roles")
+        table = functions.get_apijson_table("role", role=role, tableui_name="roles")
         return {
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
         }
-    
+
     def view(self):
         id_ = request.values.get("id")
         if not id_:
             error(_('No role id'))
         
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"roles")
+        table = functions.get_apijson_table("role", role=role, tableui_name = "roles")
 
         Role = models.role
         User = models.user
@@ -48,9 +48,8 @@ class RoleView(object):
 
 
         return {
-            "request_tag":"role",
             "id_":id_,
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
 
             "init_users":json_dumps(init_users),
@@ -153,9 +152,9 @@ class PermissionView(object):
     @expose('')
     def list(self):
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"permissions")
+        table = functions.get_apijson_table("permission", role=role, tableui_name="permissions")
         return {
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
         }
     
@@ -164,7 +163,7 @@ class PermissionView(object):
         if not id_:
             error(_('No permission id'))
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"permissions")
+        table = functions.get_apijson_table("permission", role=role, tableui_name="permissions")
 
         Permission = models.permission
         Role = models.role
@@ -177,9 +176,8 @@ class PermissionView(object):
         init_role_labels = [i.name for i in roles]
 
         return {
-            "request_tag":"permission",
             "id_":id_,
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
 
             "init_roles":json_dumps(init_roles),

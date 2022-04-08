@@ -1,12 +1,15 @@
 {{extend 'RoleView/list.html'}}
 
-{{block content}}
+{{block other_inc}}
 {{include "vue/inc_apijson_viewedit.html"}}
+{{end other_inc}}
+
+{{block content}}
 <card>
 <row>
     <i-col span="10">
         <h3 class="page-header">{{=_("Role")}}</h1>
-        <apijson-viewedit model_name="role" request_tag="{{=request_tag}}" :id="id_" :config="tconfig"></apijson-viewedit>
+        <apijson-viewedit :table="table" :id="id_"></apijson-viewedit>
     </i-col>
 </row>
 <row>
@@ -51,7 +54,6 @@
                 <i-button type="info" icon="ios-download" size="large" @click="save_permissions" :disabled="!changed_permissions">Save</i-button>
             </form-item>
         </i-form>
-
     </i-col>
 </row>
 </card>
@@ -64,7 +66,7 @@ var vm = new Vue({
     delimiters: ['{', '}'],
     data:function(){
         return {
-            tconfig:{{=tconfig_json}},
+            table:{{=table_json}},
             id_:{{=id_}},
             users: {{=init_users}},
             init_user_labels:{{<<init_user_labels}},
@@ -97,7 +99,7 @@ var vm = new Vue({
                     "@count": 10,
                     "user":{
                         "@order":"username+",
-                        "@role":"ADMIN",
+                        "@role":this.table.role,
                         "@expr":["username$","|","nickname$"],
                         "username$":"%"+query+"%",
                         "nickname$":"%"+query+"%"
@@ -106,7 +108,10 @@ var vm = new Vue({
                 "total@":"/[]/total"
             }
             //workaround for https://github.com/iview/iview/issues/5885
-            if (typeof(query)=="object") {params["[]"]["user"] = {"id{}": query,"@role":"ADMIN",} }
+            if (typeof(query)=="object") {
+                params["[]"]["user"] = {"id{}": query,"@role":this.table.role,}
+                params["[]"]["@count"] = Object.keys(query).length
+            }
 
             this.loading_user = true
             var thisp = this
@@ -173,14 +178,17 @@ var vm = new Vue({
                     "@count": 10,
                     "usergroup":{
                         "@order":"name+",
-                        "@role":"ADMIN",
+                        "@role":this.table.role,
                         "name$":"%"+query+"%",
                     }
                 },
                 "total@":"/[]/total"
             }
             //workaround for https://github.com/iview/iview/issues/5885
-            if (typeof(query)=="object") {params["[]"]["usergroup"] = {"id{}": query,"@role":"ADMIN",} }
+            if (typeof(query)=="object") {
+                params["[]"]["usergroup"] = {"id{}": query,"@role":this.table.role,}
+                params["[]"]["@count"] = Object.keys(query).length
+            }
 
             this.loading_group = true
             var thisp = this
@@ -247,7 +255,7 @@ var vm = new Vue({
                     "@count": 10,
                     "permission":{
                         "@order":"name+",
-                        "@role":"ADMIN",
+                        "@role":this.table.role,
                         "name$":"%"+query+"%",
                     }
                 },

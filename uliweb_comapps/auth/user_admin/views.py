@@ -1,5 +1,5 @@
 #coding=utf-8
-from uliweb import expose, functions, models, decorators
+from uliweb import expose, functions, models
 from uliweb.i18n import ugettext_lazy as _
 
 def _get_portrait_image_filename(id):
@@ -11,7 +11,6 @@ def _get_portrait_image_thumbnail(id, size=50):
     return os.path.join('portraits', str(id) + '.%dx%d' % (size, size) + '.jpg')
 
 def get_user_image(user, size=50):
-    from uliweb.contrib.staticfiles import url_for_static
     from uliweb import functions
     import os
     
@@ -41,7 +40,7 @@ def get_timezone_options():
         for i in timezones:
             try:
                 _timezone_options.append({"value":i,"label":_get_label(i)})
-            except Exception as e:
+            except Exception:
                 pass
         return _timezone_options
 
@@ -60,15 +59,15 @@ class UserView(object):
         image_url = functions.get_user_image(user)
 
         role = "OWNER"
-        tconfig = functions.get_apijson_table(role,"userself")
-        tconfig["editable"] = can_modify
+        table = functions.get_apijson_table("user", role=role, tableui_name="userself")
+        table.tableui["editable"] = can_modify
 
         return {
             "request_tag":"userself",
             "can_modify":can_modify,
             "image_url":image_url,
             "uid":user.id,
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
             "usergroups":list(user.groups.all().order_by('name'))
         }
@@ -159,9 +158,9 @@ class UserAdmin(object):
 
     def list(self):
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"users")
+        table = functions.get_apijson_table("user", role=role, tableui_name = "users")
         return {
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
         }
     
@@ -179,13 +178,12 @@ class UserAdmin(object):
         image_url = functions.get_user_image(user)
 
         role = "ADMIN"
-        tconfig = functions.get_apijson_table(role,"users")
+        table = functions.get_apijson_table("user", role=role, tableui_name = "users")
         return {
-            "request_tag":"user",
             "can_modify":can_modify,
             "image_url":image_url,
             "uid":uid,
-            "tconfig_json":json_dumps(tconfig),
+            "table_json":json_dumps(table.to_dict()),
             "role":role,
             "usergroups":list(user.groups.all().order_by('name'))
         }

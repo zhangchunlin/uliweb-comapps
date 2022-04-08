@@ -6,8 +6,11 @@
 {{sidemenu_name,sidemenu_open,sidemenu_active='SIDEMENU',"['user_admin']","users"}}
 {{end sidemenu_config}}
 
-{{block content}}
+{{block other_inc}}
 {{include "vue/inc_apijson_table.html"}}
+{{end other_inc}}
+
+{{block content}}
 <card>
 <h3 class="page-header">Users</h3>
 <row>
@@ -20,23 +23,19 @@
     </i-col>
 </row>
 
-<apijson-table model_name="user" :config="tconfig" :hook_init="hook_init" :hook_ajax_params="hook_ajax_params" :custom_tcolumns_render_generator="custom_tcolumns_render_generator" ref="table"></apijson-table>
+<apijson-table :table="table" :hook_init="hook_init" :hook_ajax_params="hook_ajax_params" :custom_tcolumns_render_generator="custom_tcolumns_render_generator" ref="table"></apijson-table>
 </card>
 {{end content}}
 
 {{block mainapp_vue}}
 <script>
 
-var tconfig = {{=tconfig_json}}
-tconfig.delete_set_deleted = true
-tconfig.deleted_field_name = "deleted"
-
 var vm = new Vue({
     el: '#mainapp',
     delimiters: ['{', '}'],
     data:function(){
         return {
-            tconfig: tconfig,
+            table: {{=table_json}},
             include_deleted: false,
             custom_tcolumns_render_generator: {
                 "id": function(key) {
