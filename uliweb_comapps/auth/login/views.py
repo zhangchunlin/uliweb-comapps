@@ -38,10 +38,11 @@ def login():
     if request.method == 'POST':
         flag = form.validate(request.values)
         if flag:
-            f, d = functions.authenticate(username=form.username.data, password=form.password.data)
+            username = form.username.data.strip()
+            f, d = functions.authenticate(username=username, password=form.password.data)
             if f:
                 request.session.remember = form.rememberme.data
-                login(form.username.data)
+                login(username)
                 next = unquote(next)
                 return redirect(next)
             else:
@@ -58,9 +59,21 @@ def login():
 def api_login():
     from uliweb.contrib.auth import login
 
-    if request.user:
+    relogin = request.POST.get("relogin", "") == "true"
+    session_as_token = request.POST.get("session_as_token", "") == "true"
+
+    def _result_json():
+        if session_as_token:
+            return json({"success": True,
+                        "msg": "Login success.",
+                        "token": request.session.key,
+                        "expiry_time": request.session.expiry_time})
         return json({"success": True, "msg": "Login success."})
-    username = request.POST.get("username", "")
+
+    if request.user and not relogin:
+        return _result_json()
+
+    username = request.POST.get("username", "").strip()
     password = request.POST.get("password", "")
     rememberme = request.POST.get("rememberme", "") == "true"
 
@@ -71,7 +84,8 @@ def api_login():
     if f:
         request.session.remember = rememberme
         login(username)
-        return json({"success": True, "msg": "Login success."})
+
+        return _result_json()
     else:
         return json({"success": False, "msg": "User does not exist or password is not correct!"})
 
@@ -97,7 +111,7 @@ def register():
         flag = form.validate(request.values)
         if flag:
             from uliweb import settings
-            f, d = create_user(username=form.username.data,
+            f, d = create_user(username=form.username.data.strip(),
                                password=form.password.data,
                                auth_type=settings.AUTH.AUTH_TYPE_DEFAULT)
             if f:
