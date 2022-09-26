@@ -105,7 +105,7 @@
                     thisp.loading_form = false
                   }else{
                     thisp.$Message.success(data.msg)
-                    window.location.href = "{{=functions.get_request_next()}}" + window.location.hash
+                    window.location.href = "{{<<functions.get_request_next()}}" + window.location.hash
                   }
                 }
               })
