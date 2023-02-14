@@ -16,8 +16,6 @@ def get_request_next():
     from uliweb import request
     next = request.values.get('next')
     if not next:
-        next = request.referrer
-    if not next:
         next = add_prefix('/')
     return next
 
@@ -26,6 +24,7 @@ def login():
     from uliweb.contrib.auth import login
 
     form = functions.get_form('auth.LoginForm')()
+
     if request.user:
         next = request.values.get('next')
         if next:

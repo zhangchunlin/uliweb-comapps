@@ -24,15 +24,25 @@ def check_access(require_user=True, no_user_jdata=None, no_user_code=401,
                 no_user_jdata or {"success": False, "msg": "unauthorized"}, no_user_code)
         else:
             redirect_login()
-    if require_role and not functions.has_role(request.user, require_role):
-        if is_xhr:
-            raise JsonErrorException(
-                no_role_jdata or {"success": False, "msg": "not having required role"}, no_role_code)
+    if require_role:
+        if isinstance(require_role, (tuple, list)):
+            has_role = functions.has_role(request.user, *require_role)
         else:
-            error(no_role_err or "not having required role")
-    if require_perm and not functions.has_permission(request.user, require_perm):
-        if is_xhr:
-            raise JsonErrorException(
-                no_perm_jdata or {"success": False, "msg": "no permission"}, no_perm_code)
+            has_role = functions.has_role(request.user, require_role)
+        if not has_role:
+            if is_xhr:
+                raise JsonErrorException(
+                    no_role_jdata or {"success": False, "msg": "not having required role"}, no_role_code)
+            else:
+                error(no_role_err or "not having required role")
+    if require_perm:
+        if isinstance(require_perm, (tuple, list)):
+            has_permission = functions.has_permission(request.user, *require_perm)
         else:
-            error(no_perm_err or "no permission")
+            has_permission = functions.has_permission(request.user, require_perm)
+        if not has_permission:
+            if is_xhr:
+                raise JsonErrorException(
+                    no_perm_jdata or {"success": False, "msg": "no permission"}, no_perm_code)
+            else:
+                error(no_perm_err or "no permission")
