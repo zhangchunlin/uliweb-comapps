@@ -1,0 +1,136 @@
+{{extend "Codemo/layout.html"}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_open,sidemenu_active='SIDEMENU',"['codemo_side']","codemo_uliweb_filter"}}
+{{end sidemenu_config}}
+
+{{block title}}Uliweb filter codemo{{end title}}
+
+{{block content_main}}
+<h1>Uliweb filter</h1>
+<Row>
+    <!--select model-->
+    <i-col span="4">
+        <i-select v-model="select_model" @on-change="update_options_columns" filterable clearable>
+            <i-option v-for="item in options_model" :value="item" :key="item">{ item }</i-option>
+        </i-select>
+    </i-col>
+    <i-col span="1">
+        <i-button v-show="select_model!='' && select_model!=null && select_columns.length>0" @click="update_filter_codemo" :loading="loading_filter_codemo" type="primary">Gen</i-button>
+    </i-col>
+</Row>
+<Row v-if="select_model!='' && select_model!=null">
+    <!--select columns-->
+    <i-col span="8">
+        <h2>filter html example</h2>
+        <i-select v-model="select_columns" @on-change="update_filter_codemo" filterable clearable multiple>
+            <i-option v-for="item in options_columns" :value="item.name" :key="item.name">{ item.label }</i-option>
+        </i-select>
+    </i-col>
+    <!--select column for filter component-->
+    <i-col span="8" v-show="select_columns.length>0">
+        <h2>filter vuejs component</h2>
+        <i-select v-model="select_column_comp" @on-change="update_filter_codemo" filterable clearable v-if="select_columns.length>0">
+            <i-option v-for="item in options_columns_comp" :value="item.name" :key="item.name">{ item.label }</i-option>
+        </i-select>
+    </i-col>
+</Row>
+<Row v-if="select_model!='' && select_model!=null && select_columns.length>0">
+    <!-- filter html code -->
+    <i-col span="8">
+        <i-input v-model="codemos.html_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+    </i-col>
+    <!-- filter component code -->
+    <i-col span="8">
+        <i-input v-model="codemos.component_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+    </i-col>
+
+</Row>
+{{end content_main}}
+
+{{block mainapp_vue}}
+<script>
+    var vm = new Vue({
+        el: '#mainapp',
+        delimiters: ['{', '}'],
+        data: function(){
+            return {
+                select_model: "",
+                options_model: {{=models_json}},
+                options_columns: [],
+                select_columns: [],
+                select_column_comp: "",
+                codemos: {},
+                loading_filter_codemo: false
+            }
+        },
+        computed: {
+            options_columns_comp: function(){
+                var options = []
+                for (i in this.options_columns) {
+                    if (this.select_columns.includes(this.options_columns[i].name)){
+                        options.push(this.options_columns[i])
+                    }
+                }
+                return options
+            }
+        },
+        methods: {
+            update_options_columns: function(){
+                if (this.select_model==null || this.select_model=="") {
+                    this.options_columns = []
+                    return
+                }
+                var this_ = this
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_model_columns')}}",
+                    data: {"model": this.select_model},
+                    success: function (data) {
+                        if (data.success) {
+                            this_.options_columns = data.columns
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.options_columns = []
+                        }
+                        this_.select_columns = []
+                        this_.update_filter_codemo()
+                    }
+                })
+            },
+            update_filter_codemo: function(){
+                if (this.select_model==null || this.select_model=="") {
+                    this.filter_codemo = ""
+                    return
+                }
+                this.loading_filter_codemo = true
+                var this_ = this
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_uliweb_filter_codemo')}}",
+                    data: {
+                        "model": this.select_model,
+                        "columns": JSON.stringify(this.select_columns),
+                        "column_comp": this.select_column_comp
+                    },
+                    success: function (data) {
+                        this_.loading_filter_codemo = false
+                        if (data.success) {
+                            this_.codemos = data.codemos
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.codemos = {}
+                        }
+                    },
+                    error: function() {
+                        this_.loading_filter_codemo = false
+                        this_.$Message.error("fail to gen")
+                    }
+                })
+            }
+        }
+    })
+</script>
+{{end mainapp_vue}}

@@ -1,0 +1,55 @@
+{{extend "Codemo/layout.html"}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_open,sidemenu_active='SIDEMENU',"['codemo_side']","codemo_uliweb_app"}}
+{{end sidemenu_config}}
+
+{{block title}}Uliweb app codemo{{end title}}
+
+{{block content_main}}
+<h1>Uliweb App</h1>
+<Row>
+    <i-col span="8">
+        <h2>app layout.html</h2><hr />
+        <i-input v-model="codemos.layout" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+    </i-col>
+    <i-col span="8">
+        <h2>app page.html</h2><hr />
+        <i-input v-model="codemos.page" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+    </i-col>
+</Row>
+<Row>
+    <i-col span="8">
+        <h2>app views.py</h2><hr />
+        <i-input v-model="codemos.views" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+    </i-col>
+</Row>
+{{end content_main}}
+
+{{block mainapp_vue}}
+<script>
+    var vm = new Vue({
+        el: '#mainapp',
+        delimiters: ['{', '}'],
+        data: function(){
+            return {
+                codemos: {}
+            }
+        },
+        methods: {},
+        computed: {},
+        mounted: function(){
+            var this_ = this
+            $.ajax({
+                type: "GET",
+                url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_uliweb_app_codemo')}}",
+                success: function (data) {
+                    if (data.success) {
+                        this_.codemos = data.codemos
+                    }
+                }
+            })
+        }
+    })
+</script>
+{{end mainapp_vue}}

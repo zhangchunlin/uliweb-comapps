@@ -1,0 +1,358 @@
+{{extend "Codemo/layout.html"}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_open,sidemenu_active='SIDEMENU',"['codemo_side']","codemo_uliweb_crud"}}
+{{end sidemenu_config}}
+
+{{block content_main}}
+<div class='box'>
+    <h1>CRUD</h1>
+    <h2>query api & table ui</h2><hr />
+    <Row>
+        <!--select model-->
+        <i-col span="4">
+            <i-select v-model="select_model_table" @on-change="update_options_column_table" filterable clearable>
+                <i-option v-for="item in options_model" :value="item" :key="item">{ item }</i-option>
+            </i-select>
+        </i-col>
+        <i-col span="1">
+            <i-button v-show="select_model_table!='' && select_model_table!=null" @click="update_api_query_codemo" :loading="loading_api_query_codemo" type="primary">Gen</i-button>
+        </i-col>
+        <!--select table type-->
+        <i-col span="4" offset="3" v-show="select_model_table!='' && select_model_table!=null">
+            <i-select v-model="select_table" @on-change="update_api_query_codemo" filterable clearable>
+                <i-option v-for="item in options_table" :value="item" :key="item">{ item }</i-option>
+            </i-select>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_table!='' && select_model_table!=null">
+        <!--select columns for table-->
+        <i-col span="8">
+            <i-select v-model="select_columns_table" @on-change="update_api_query_codemo" filterable clearable multiple>
+                <i-option v-for="item in options_column_table" :value="item.name" :key="item.name">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+        <i-col span="8">
+            <i-input v-model="table_url_for_prefix" @on-change="save_table_url_for_prefix" placeholder="url_for prefix"></i-input>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_table!='' && select_model_table!=null">
+        <!-- api query code -->
+        <i-col span="8">
+            <i-input v-model="api_query_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+        <!-- table ui code -->
+        <i-col span="8">
+            <i-input v-model="table_ui_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+    </Row>
+    <h2>addupdate api & add/edit ui</h2><hr />
+    <Row>
+        <!-- select model for add -->
+        <i-col span="4">
+            <i-select v-model="select_model_add" @on-change="update_options_column_add" filterable clearable>
+                <i-option v-for="item in options_model" :value="item" :key="item">{ item }</i-option>
+            </i-select>
+        </i-col>
+        <!-- api_addupdate code -->
+        <i-col span="1" v-if="select_model_add!='' && select_model_add!=null">
+            <i-button @click="update_api_add_codemo" :loading="loading_api_add_codemo"  type="primary">Gen</i-button>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_add!='' && select_model_add!=null">
+        <i-col span="8">
+            <i-select v-model="select_columns_add" @on-change="update_api_add_codemo" filterable clearable multiple>
+                <i-option v-for="item in options_column_add" :value="item.name" :key="item.name">{ item.label }</i-option>
+            </i-select>
+        </i-col>
+        <i-col span="8">
+            <i-input v-model="add_url_for_prefix" @on-change="save_add_url_for_prefix" placeholder="url_for prefix"></i-input>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_add!='' && select_model_add!=null">
+        <i-col span="8">
+            <i-input v-model="api_add_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+        <i-col span="8">
+            <i-input v-model="add_ui_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+        <i-col span="8">
+            <i-input v-model="edit_ui_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+    </Row>
+    <h2>get api(get list/one)</h2><hr />
+    <Row>
+        <i-col span="4">
+            <i-select v-model="select_model_get" @on-change="update_api_get_codemo" filterable clearable>
+                <i-option v-for="item in options_model" :value="item" :key="item">{ item }</i-option>
+            </i-select>
+        </i-col>
+        <i-col span="1" v-show="select_model_get!='' && select_model_get!=null">
+            <i-button @click="update_api_get_codemo" :loading="loading_api_get_codemo"  type="primary">Gen</i-button>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_get!='' && select_model_get!=null">
+        <i-col span="8">
+            <i-input v-model="api_get_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+    </Row>
+    <h2>remove api & remove ui</h2><hr />
+    <Row>
+        <i-col span="4">
+            <i-select v-model="select_model_remove" @on-change="update_api_remove_codemo" filterable clearable>
+                <i-option v-for="item in options_model" :value="item" :key="item">{ item }</i-option>
+            </i-select>
+        </i-col>
+        <i-col span="1" v-show="select_model_remove!='' && select_model_remove!=null">
+            <i-button @click="update_api_remove_codemo" :loading="loading_api_remove_codemo"  type="primary">Gen</i-button>
+        </i-col>
+        <i-col span="8" offset="3" v-show="select_model_remove!='' && select_model_remove!=null">
+            <i-input v-model="remove_url_for_prefix" @on-change="save_remove_url_for_prefix" placeholder="url_for prefix"></i-input>
+        </i-col>
+    </Row>
+    <Row v-if="select_model_remove!='' && select_model_remove!=null">
+        <i-col span="8">
+            <i-input v-model="api_remove_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+        <i-col span="8">
+            <i-input v-model="remove_ui_codemo" type="textarea" :autosize="{minRows: 10,maxRows: 80}"/>
+        </i-col>
+    </Row>
+</div>
+{{end content_main}}
+
+{{block mainapp_vue}}
+<script>
+    var vm = new Vue({
+        el: '#mainapp',
+        delimiters:['{','}'],
+        data: {
+            select_model_table: "",
+            options_model: {{=models_json}},
+            api_query_codemo: "",
+            loading_api_query_codemo: false,
+            
+            options_column_table: [],
+            select_columns_table: [],
+            
+            select_table: "bootstraptable",
+            options_table: ["bootstraptable","iviewtable"],
+            table_ui_codemo: "",
+            table_url_for_prefix: localStorage.getItem("codemo_table_url_for_prefix") || "PROJECT.APP.views.CLASS",
+            
+            select_model_add: "",
+            api_add_codemo: "",
+            loading_api_add_codemo: false,
+
+            options_column_add: [],
+            select_columns_add: [],
+            
+            add_ui_codemo:"",
+            add_url_for_prefix: localStorage.getItem("codemo_add_url_for_prefix") || "PROJECT.APP.views.CLASS",
+            
+            edit_ui_codemo:"",
+            
+            select_model_get: "",
+            api_get_codemo: "",
+            loading_api_get_codemo: false,
+            get_ui_codemo:"",
+            get_url_for_prefix: localStorage.getItem("codemo_get_url_for_prefix") || "PROJECT.APP.views.CLASS",
+
+            select_model_remove: "",
+            api_remove_codemo: "",
+            loading_api_remove_codemo: false,
+            remove_ui_codemo:"",
+            remove_url_for_prefix: localStorage.getItem("codemo_remove_url_for_prefix") || "PROJECT.APP.views.CLASS"
+        },
+        methods: {
+            update_api_query_codemo: function(){
+                if (this.select_model_table==null || this.select_model_table=="") {
+                    this.api_query_codemo = ""
+                    return
+                }
+                this.loading_api_query_codemo = true
+                var this_ = this
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_query_codemo')}}",
+                    data: {
+                        "table_type": this.select_table,
+                        "model": this.select_model_table,
+                        "columns": JSON.stringify(this.select_columns_table),
+                        "table_url_for_prefix": this.table_url_for_prefix
+                    },
+                    success: function (data) {
+                        this_.loading_api_query_codemo = false
+                        if (data.success) {
+                            this_.api_query_codemo = data.api_query_code
+                            this_.table_ui_codemo = data.table_ui_code
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.api_query_codemo = ""
+                            this_.table_ui_codemo = ""
+                        }
+                    },
+                    error: function() {
+                        this_.loading_api_query_codemo = false
+                        this_.$Message.error("fail to gen")
+                    }
+                })
+            },
+            update_options_column_table: function(){
+                if (this.select_model_table==null || this.select_model_table=="") {
+                    this.options_column_table = []
+                    return
+                }
+                var this_ = this
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_model_columns')}}",
+                    data: {"model": this.select_model_table},
+                    success: function (data) {
+                        if (data.success) {
+                            this_.options_column_table = data.columns
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.options_column_table = []
+                        }
+                        this_.select_columns_table = []
+                    }
+                })
+                this.update_api_query_codemo()
+            },
+            update_options_column_add: function(){
+                if (this.select_model_add==null || this.select_model_add=="") {
+                    this.options_column_add = []
+                    return
+                }
+                var this_ = this
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_model_columns')}}",
+                    data: {"model": this.select_model_add, "no_id":true},
+                    success: function (data) {
+                        if (data.success) {
+                            this_.options_column_add = data.columns
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.options_column_add = []
+                        }
+                        this_.select_columns_add = []
+                    }
+                })
+                this.update_api_add_codemo()
+            },
+            update_api_add_codemo: function(){
+                if (this.select_model_add==null || this.select_model_add=="") {
+                    this.options_column_add = []
+                    return
+                }
+                var this_ = this
+                this.loading_api_add_codemo = true
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_add_codemo')}}",
+                    data: {
+                        "model": this.select_model_add,
+                        "columns": JSON.stringify(this.select_columns_add),
+                        "add_url_for_prefix": this.add_url_for_prefix
+                    },
+                    success: function (data) {
+                        this_.loading_api_add_codemo = false
+                        if (data.success) {
+                            this_.api_add_codemo = data.api_add_code
+                            this_.add_ui_codemo = data.add_ui_code
+                            this_.edit_ui_codemo = data.edit_ui_code
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.api_add_codemo = ""
+                            this_.add_ui_codemo = ""
+                            this_.edit_ui_codemo = ""
+                        }
+                    },
+                    error: function() {
+                        this_.loading_api_add_codemo = false
+                        this_.$Message.error("fail to gen")
+                    }
+                })
+            },
+            update_api_get_codemo: function(){
+                if (this.select_model_get==null || this.select_model_get=="") {
+                    return
+                }
+                var this_ = this
+                this.loading_api_get_codemo = true
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_get_codemo')}}",
+                    data: {
+                        "model": this.select_model_get,
+                        "get_url_for_prefix": this.get_url_for_prefix
+                    },
+                    success: function (data) {
+                        this_.loading_api_get_codemo = false
+                        if (data.success) {
+                            this_.api_get_codemo = data.api_get_code
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.api_get_codemo = ""
+                        }
+                    },
+                    error: function() {
+                        this_.loading_api_get_codemo = false
+                        this_.$Message.error("fail to gen")
+                    }
+                })
+            },
+            update_api_remove_codemo: function(){
+                if (this.select_model_remove==null || this.select_model_remove=="") {
+                    return
+                }
+                var this_ = this
+                this.loading_api_remove_codemo = true
+                $.ajax({
+                    type: "POST",
+                    url: "{{=url_for('uliweb_comapps.develop.codemo.views.Codemo.api_get_remove_codemo')}}",
+                    data: {
+                        "model": this.select_model_remove,
+                        "remove_url_for_prefix": this.remove_url_for_prefix
+                    },
+                    success: function (data) {
+                        this_.loading_api_remove_codemo = false
+                        if (data.success) {
+                            this_.api_remove_codemo = data.api_remove_code
+                            this_.remove_ui_codemo = data.remove_ui_code
+                        }
+                        else {
+                            this_.$Message.error(data.msg)
+                            this_.api_remove_codemo = ""
+                            this_.remove_ui_codemo = ""
+                        }
+                    },
+                    error: function() {
+                        this_.loading_api_remove_codemo = false
+                        this_.$Message.error("fail to gen")
+                    }
+                })
+            },
+            save_add_url_for_prefix: function(){
+                localStorage.setItem("codemo_add_url_for_prefix",this.add_url_for_prefix)
+            },
+            save_table_url_for_prefix: function(){
+                localStorage.setItem("codemo_table_url_for_prefix",this.table_url_for_prefix)
+            },
+            save_get_url_for_prefix: function(){
+                localStorage.setItem("codemo_get_url_for_prefix",this.get_url_for_prefix)
+            },
+            save_remove_url_for_prefix: function(){
+                localStorage.setItem("codemo_remove_url_for_prefix",this.remove_url_for_prefix)
+            }
+        }
+    })
+</script>
+{{end mainapp_vue}}

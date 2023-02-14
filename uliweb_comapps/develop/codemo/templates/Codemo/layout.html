@@ -1,0 +1,20 @@
+{{extend "iview/layout2.html"}}
+
+{{block title}} Code Demo {{end}}
+
+{{block mainmenu_config}}
+{{mainmenu_name,mainmenu_active='MAINMENU','codemo'}}
+{{end mainmenu_config}}
+
+{{block sidemenu_config}}
+{{sidemenu_name,sidemenu_open,sidemenu_active="SIDEMENU","['codemo_side']","codemo_uliweb_app"}}
+{{end sidemenu_config}}
+
+{{block info_menu}}
+{{end info_menu}}
+
+{{block pagecss}}
+<style>
+    hr{margin-top: 0;}
+</style>
+{{end pagecss}}
