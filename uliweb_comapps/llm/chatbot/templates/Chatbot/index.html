@@ -1,0 +1,51 @@
+{{extend "iview/layout2.html"}}
+
+{{block title}}LLM Chatbot{{end title}}
+
+{{block content_wrapper}}
+{{include "inc/chatbot_sse.html"}}
+<card id="maincontent">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 15px;">
+        <i-input
+            type="textarea"
+            placeholder="请输入内容..."
+            style="width: 1100px"
+            rows="5"
+            clearable
+            v-model="inputMessage"
+            @keyup.ctrl.enter.native="send"
+        ></i-input>
+        <i-button type="primary" @click="send" :disabled="receiving">
+            <Icon type="md-arrow-up" />
+        </i-button>
+        <chatbot-sse
+            ref="chatbot_sse"
+            stream_url="{{=url_for('uliweb_comapps.llm.chatbot.views.Chatbot.api_stream')}}"
+            @receiving="receiving = true"
+            @received="receiving = false"
+        ></chatbot-sse>
+    </div>
+</card>
+{{end content_wrapper}}
+
+{{block mainapp_vue}}
+<script>
+    var vm = new Vue({
+        el: '#mainapp',
+        delimiters: ['{', '}'],
+        data: function(){
+            return {
+                inputMessage: '',
+                receiving: false
+            }
+        },
+        methods: {
+            send: function(){
+                this.$refs.chatbot_sse.connectToStream(this.inputMessage)
+            }
+        },
+        computed: {},
+        mounted: function(){}
+    })
+</script>
+{{end mainapp_vue}}

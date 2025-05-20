@@ -1,0 +1,111 @@
+{{use 'ui.markdown_it'}}
+<script>
+    Vue.component('chatbot-sse', {
+        props: {
+            stream_url: {
+                type: String,
+                required: true
+            }
+        },
+        delimiters: ['{', '}'],
+        template: `
+    <div id="chatbot-sse">
+        <div v-if="thinking_content">
+            <i-button @click="thinking_expand = !thinking_expand" type="text">
+                {thinkingButtonCaption}<Icon :type="thinking_expand ? 'md-arrow-up' : 'md-arrow-down'" />
+            </i-button>
+            <div v-if="thinking_expand" style="font-size: 0.8em; color: #888; white-space: pre-line; margin: 0.5em 0; border-left: 2px solid #e5e5e5; padding-left: 0.5em">{ thinking_content }</div>
+        </div>
+        <div v-html="compiledMarkdown" style="margin: 0.5em 0"></div>
+        <div v-if="usageData.total_tokens" style="font-size: 0.8em; color: #666; margin-top: 0.5em">
+            Tokens: 提示词 {usageData.prompt_tokens} | 思考 {usageData.completion_tokens_details.reasoning_tokens} | 回答 {usageData.completion_tokens - usageData.completion_tokens_details.reasoning_tokens} | 总计 {usageData.total_tokens}
+        </div>
+    </div>
+`,
+        data() {
+            return {
+                thinking_content: '',
+                thinking: false,
+                thinking_expand: false,
+                content: '',
+                eventSource: null,
+                markedReady: false,
+                usageData: {}
+            }
+        },
+        computed: {
+            compiledMarkdown() {
+                if (window.markdownit) {
+                    const md = window.markdownit();
+                    return md.render(this.content);
+                }
+                return this.content;
+            },
+            thinkingButtonCaption() {
+                if (this.thinking) {
+                    return '深度思考中...';
+                } else {
+                    return '已深度思考';
+                }
+            }
+        },
+        methods: {
+            connectToStream(user_input) {
+                if (!user_input) {
+                    return;
+                }
+                this.$emit('receiving');
+                if (this.eventSource) {
+                    this.eventSource.close();
+                }
+                this.thinking_content = '';
+                this.thinking = null;
+                this.content = '';
+                this.usageData = {};
+
+                const url = `${this.stream_url}?input=${encodeURIComponent(user_input)}`;
+                this.eventSource = new EventSource(url);
+
+                this.eventSource.addEventListener('message', (event) => {
+                    const processedData = event.data.replace(/\\n/g, '\n');
+                    if (processedData === '<think>' && this.thinking === null) {
+                        this.thinking = true;
+                        this.thinking_expand = true;
+                    } else if (processedData === '</think>' && this.thinking) {
+                        this.thinking = false;
+                        this.thinking_expand = false;
+                    } else if (this.thinking) {
+                        this.thinking_content += processedData;
+                    } else {
+                        this.content += processedData;
+                    }
+                });
+
+                this.eventSource.addEventListener('usage_stats', (event) => {
+                    try {
+                        const usageData = JSON.parse(event.data);
+                        this.usageData = usageData;
+                    } catch (error) {
+                        console.error('Failed to parse usage stats:', error);
+                    }
+                });
+
+                this.eventSource.addEventListener('error', (error) => {
+                    console.error('EventSource failed:', error);
+                    this.eventSource.close();
+                    this.$emit('received');
+                });
+
+                this.eventSource.addEventListener('end', (event) => {
+                    this.eventSource.close();
+                    this.$emit('received');
+                });
+            }
+        },
+        beforeDestroy() {
+            if (this.eventSource) {
+                this.eventSource.close();
+            }
+        }
+    });
+</script>
