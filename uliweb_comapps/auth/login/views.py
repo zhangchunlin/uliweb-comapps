@@ -1,5 +1,6 @@
 #coding=utf8
 
+from uliweb import request, json, error
 from uliweb.core.SimpleFrame import functions, expose, redirect
 from uliweb.i18n import ugettext_lazy as _
 from uliweb.utils._compat import import_
@@ -12,30 +13,32 @@ def add_prefix(url):
     return settings.DOMAINS.static.get('url_prefix', '') + url or '/'
 
 
-def get_request_next():
-    from uliweb import request
-    next = request.values.get('next')
+async def get_request_next():
+    params = await request.get_params()
+    next = params.get('next')
     if not next:
         next = add_prefix('/')
     return next
 
 
-def login():
+async def login():
     from uliweb.contrib.auth import login
 
     form = functions.get_form('auth.LoginForm')()
 
     if request.user:
-        next = request.values.get('next')
+        params = await request.get_params()
+        next = params.get('next')
         if next:
             return redirect(next)
 
-    next = functions.get_request_next()
+    next = await get_request_next()
     if request.method == 'GET':
         form.next.data = next
         return {'next': next}
     if request.method == 'POST':
-        flag = form.validate(request.values)
+        params = await request.get_params()
+        flag = form.validate(params)
         if flag:
             username = form.username.data.strip()
             f, d = functions.authenticate(username=username, password=form.password.data)
@@ -55,11 +58,12 @@ def login():
             return {'form': form, 'msg': str(msg)}
 
 @expose("/api_login")
-def api_login():
+async def api_login():
     from uliweb.contrib.auth import login
 
-    relogin = request.POST.get("relogin", "") == "true"
-    session_as_token = request.POST.get("session_as_token", "") == "true"
+    post = await request.get_POST()
+    relogin = post.get("relogin", "") == "true"
+    session_as_token = post.get("session_as_token", "") == "true"
 
     def _result_json():
         if session_as_token:
@@ -72,9 +76,9 @@ def api_login():
     if request.user and not relogin:
         return _result_json()
 
-    username = request.POST.get("username", "").strip()
-    password = request.POST.get("password", "")
-    rememberme = request.POST.get("rememberme", "") == "true"
+    username = post.get("username", "").strip()
+    password = post.get("password", "")
+    rememberme = post.get("rememberme", "") == "true"
 
     if not username or not password:
         return json({"success": False, "msg": "Empty username or password."})
@@ -88,16 +92,18 @@ def api_login():
     else:
         return json({"success": False, "msg": "User does not exist or password is not correct!"})
 
-def register():
+@expose('/register')
+async def register():
     from uliweb import settings
     from uliweb.contrib.auth import create_user, login
 
     if not settings.LOGIN.register:
         error('不允许用户自行注册')
 
-    next = request.values.get('next')
+    params = await request.get_params()
+    next = params.get('next')
     if not next:
-        next = request.referrer
+        next = request.headers.get("Referer")
         if not next or (next and next.endswith('/register')):
             next = add_prefix('/')
 
@@ -107,7 +113,7 @@ def register():
         form.next.data = next
         return {'form': form, 'msg': ''}
     if request.method == 'POST':
-        flag = form.validate(request.values)
+        flag = form.validate(params)
         if flag:
             from uliweb import settings
             f, d = create_user(username=form.username.data.strip(),
@@ -121,15 +127,18 @@ def register():
             else:
                 form.errors.update(d)
 
-        if request.is_xhr:
+        is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        if is_xhr:
             return json({'success': False, '_': 'Register Failed', 'errors': form.errors})
         else:
             msg = form.errors.get('_', '') or _('Register failed!')
             return {'form': form, 'msg': str(msg)}
 
-def logout():
+@expose('/logout')
+async def logout():
     from uliweb.contrib.auth import logout as out
     from uliweb import settings
     out()
-    next = unquote(request.POST.get('next', add_prefix('/')))
+    post = await request.get_POST()
+    next = unquote(post.get('next', add_prefix('/')))
     return redirect(next)

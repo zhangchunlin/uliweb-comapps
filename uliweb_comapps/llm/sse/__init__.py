@@ -3,11 +3,11 @@
 
 import json
 from uliweb import settings
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 
-def openai_event_stream(user_input, api_key=None, base_url=None, model=None):
-    client = OpenAI(
+async def openai_event_stream(user_input, api_key=None, base_url=None, model=None):
+    client = AsyncOpenAI(
         api_key=api_key or settings.LLM.api_key,
         base_url=base_url or settings.LLM.base_url
     )
@@ -17,7 +17,7 @@ def openai_event_stream(user_input, api_key=None, base_url=None, model=None):
     ]
 
     try:
-        response = client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=model or settings.LLM.model,
             messages=messages,
             stream=True
@@ -25,7 +25,7 @@ def openai_event_stream(user_input, api_key=None, base_url=None, model=None):
 
         full_content = ""
         thinking = False
-        for chunk in response:
+        async for chunk in response:
             if hasattr(chunk.choices[0].delta, 'reasoning_content') and chunk.choices[0].delta.reasoning_content:
                 if not thinking:
                     yield "data: <think>\n\n"

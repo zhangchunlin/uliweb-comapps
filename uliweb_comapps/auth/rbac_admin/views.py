@@ -1,7 +1,7 @@
-#coding=utf-8
-from uliweb import expose, functions, models
+# coding=utf-8
+from uliweb import expose, functions, models, request, json, error
 from uliweb.i18n import ugettext_lazy as _
-from json import loads as json_loads
+from json import dumps as json_dumps
 
 @expose('/admin/roles')
 class RoleView(object):
@@ -20,11 +20,12 @@ class RoleView(object):
             "role":role,
         }
 
-    def view(self):
-        id_ = request.values.get("id")
+    async def view(self):
+        params = await request.get_params()
+        id_ = params.get("id")
         if not id_:
             error(_('No role id'))
-        
+
         role = "ADMIN"
         table = functions.get_apijson_table("role", role=role, tableui_name = "roles")
 
@@ -61,9 +62,9 @@ class RoleView(object):
             "init_permissions":json_dumps(init_permissions),
             "init_permission_labels":json_dumps(init_permission_labels),
         }
-    
-    def api_update_users(self):
-        request_data = json_loads(request.data)
+
+    async def api_update_users(self):
+        request_data = await request.get_json()
         role_id = request_data.get("role")
         if not role_id:
             return json({"success": False, "msg": "no role id"})
@@ -89,8 +90,8 @@ class RoleView(object):
         else:
             return json({"success": False, "msg": "fail to update role '%s', maybe no change"%(r.name)})
 
-    def api_update_groups(self):
-        request_data = json_loads(request.data)
+    async def api_update_groups(self):
+        request_data = await request.get_json()
         role_id = request_data.get("role")
         if not role_id:
             return json({"success": False, "msg": "no role id"})
@@ -116,8 +117,8 @@ class RoleView(object):
         else:
             return json({"success": False, "msg": "fail to update role '%s', maybe no change"%(r.name)})
 
-    def api_update_permissions(self):
-        request_data = json_loads(request.data)
+    async def api_update_permissions(self):
+        request_data = await request.get_json()
         role_id = request_data.get("role")
         if not role_id:
             return json({"success": False, "msg": "no role id"})
@@ -157,9 +158,10 @@ class PermissionView(object):
             "table_json":json_dumps(table.to_dict()),
             "role":role,
         }
-    
-    def view(self):
-        id_ = request.values.get("id")
+
+    async def view(self):
+        params = await request.get_params()
+        id_ = params.get("id")
         if not id_:
             error(_('No permission id'))
         role = "ADMIN"
@@ -184,8 +186,8 @@ class PermissionView(object):
             "init_role_labels":json_dumps(init_role_labels),
         }
 
-    def api_update_roles(self):
-        request_data = json_loads(request.data)
+    async def api_update_roles(self):
+        request_data = await request.get_json()
         perm_id = request_data.get("permission")
         if not perm_id:
             return json({"success": False, "msg": "no role id"})

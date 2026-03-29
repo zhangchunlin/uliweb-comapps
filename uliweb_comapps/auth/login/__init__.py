@@ -3,10 +3,11 @@ from uliweb import request, json, functions, error
 from uliweb.core.SimpleFrame import RedirectException
 
 
-def redirect_login(next=None):
+async def redirect_login(next=None):
     from uliweb import Redirect, url_for
+    url = await functions.request_url()
     Redirect(next or url_for('uliweb_comapps.auth.login.views.login',
-                             next=functions.request_url()))
+                             next=url))
 
 
 class JsonErrorException(RedirectException):
@@ -14,16 +15,17 @@ class JsonErrorException(RedirectException):
         self.response = json(jdata, status=code)
 
 
-def check_access(require_user=True, no_user_jdata=None, no_user_code=401,
-                 require_role=None, no_role_jdata=None, no_role_code=403, no_role_err=None,
-                 require_perm=None, no_perm_jdata=None, no_perm_code=403, no_perm_err=None):
-    is_xhr = request.is_xhr or request.function.find("api_") != -1
+async def check_access(require_user=True, no_user_jdata=None, no_user_code=401,
+                       require_role=None, no_role_jdata=None, no_role_code=403, no_role_err=None,
+                       require_perm=None, no_perm_jdata=None, no_perm_code=403, no_perm_err=None):
+    headers = request.headers
+    is_xhr = (headers.get("X-Requested-With") == "XMLHttpRequest") or request.function.find("api_") != -1
     if require_user and not request.user:
         if is_xhr:
             raise JsonErrorException(
                 no_user_jdata or {"success": False, "msg": "unauthorized"}, no_user_code)
         else:
-            redirect_login()
+            await redirect_login()
     if require_role:
         if isinstance(require_role, (tuple, list)):
             has_role = functions.has_role(request.user, *require_role)
